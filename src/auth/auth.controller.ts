@@ -1,4 +1,4 @@
-import { Controller, Post, Body, ValidationPipe, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, ValidationPipe, UseGuards, Req, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { AuthService } from './auth.service';
@@ -8,6 +8,8 @@ import { UserEntity } from './entity/user.entity';
 
 @Controller('auth')
 export class AuthController {
+    private logger = new Logger('AuthController');
+
     constructor(
         private authService: AuthService
     ) {}
@@ -16,6 +18,7 @@ export class AuthController {
     signUp(
         @Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto
     ): Promise<void> {
+        this.logger.verbose(`[signUp] authCredentialsDto: ${JSON.stringify(authCredentialsDto)}`);
         return this.authService.singnUp(authCredentialsDto);
     }
 
@@ -23,6 +26,7 @@ export class AuthController {
     signIn(
         @Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto
     ): Promise<JwtSignInInterface> {
+        this.logger.verbose(`[signIn] authCredentialsDto: ${authCredentialsDto}`);
         return this.authService.singnIn(authCredentialsDto);
     }
 
@@ -30,6 +34,7 @@ export class AuthController {
     @UseGuards(AuthGuard())
     // test(@Req() req) {
     test(@GetUserDecorator() user: UserEntity) {
+        this.logger.verbose(`[test] user: ${user}`);
         return user;
     }
 }

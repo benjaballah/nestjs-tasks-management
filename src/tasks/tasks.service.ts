@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { TaskStatus } from './interface/task.enum';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
@@ -9,6 +9,7 @@ import { UserEntity } from 'src/auth/entity/user.entity';
 
 @Injectable()
 export class TasksService {
+    private logger = new Logger('TasksService');
 
     constructor(
         @InjectRepository(TaskRepository)
@@ -20,13 +21,19 @@ export class TasksService {
     }
 
     async getTaskById(id: number, user: UserEntity): Promise<TaskEntity> {
-        const found = await this.taskRepository.findOne({ where: { id, userId: user.id } })
+        try {
+            const found = await this.taskRepository.findOne({ where: { id, userId: user.id } })
 
-        if (!found) {
-            throw new NotFoundException('TASK_NOT_FOUND');
+            if (!found) {
+                throw new NotFoundException('TASK_NOT_FOUND');
+            }
+
+            return found;
+        } catch (error) {
+            this.logger.error(`[getTaskById] id: ${id}, userId: ${user.id}`, error.stack);
+            throw new InternalServerErrorException();
         }
 
-        return found;
     }
 
     createTask(createTaskDto: CreateTaskDto, user: UserEntity): Promise<TaskEntity> {
@@ -34,15 +41,27 @@ export class TasksService {
     }
 
     async deleteTask(id: number, user: UserEntity): Promise<boolean> {
-        const result = await this.taskRepository.delete({ id, userId: user.id });
+        try {
+            const result = await this.taskRepository.delete({ id, userId: user.id });
 
-        return result.affected > 0;
+            return result.affected > 0;
+        } catch (error) {
+            this.logger.error(`[deleteTask] id: ${id}, userId: ${user.id}`, error.stack);
+            throw new InternalServerErrorException();
+        }
     }
 
     async updateTaskStatus(id: number, status: TaskStatus, user: UserEntity): Promise<TaskEntity> {
-        const task = await this.getTaskById(id, user);
-        task.status = status;
-        await task.save();
-        return task;
+        try {
+            const task = await this.getTaskById(id, user);
+            task.status = status;
+
+            await task.save();
+
+            return task;
+        } catch (error) {
+            this.logger.error(`[updateTaskStatus] id: ${id}, status: ${status}, userId: ${user.id}`, error.stack);
+            throw new InternalServerErrorException();
+        }
     }
 }

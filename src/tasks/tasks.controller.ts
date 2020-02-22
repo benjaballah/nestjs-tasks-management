@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch, Query, UsePipes, ValidationPipe, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, Query, UsePipes, ValidationPipe, ParseIntPipe, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TasksService } from './tasks.service';
 import { TaskStatus } from './interface/task.enum';
@@ -12,6 +12,8 @@ import { UserEntity } from 'src/auth/entity/user.entity';
 @Controller('tasks')
 @UseGuards(AuthGuard())
 export class TasksController {
+    private logger = new Logger('TasksController');
+
     constructor(private tasksService: TasksService) {}
 
     @Get()
@@ -19,6 +21,7 @@ export class TasksController {
         @Query(ValidationPipe) filterDto: GetTasksFilterDto,
         @GetUserDecorator() user: UserEntity,
     ): Promise<TaskEntity[]> {
+        this.logger.verbose(`[getTask] userId ${user.id}, Filter ${JSON.stringify(GetTasksFilterDto)}`);
         return this.tasksService.getTasks(filterDto, user);
     }
 
@@ -27,6 +30,7 @@ export class TasksController {
         @Param('id', ParseIntPipe) id: number,
         @GetUserDecorator() user: UserEntity,
     ): Promise<TaskEntity> {
+        this.logger.verbose(`[getTaskById] userId ${user.id}, id ${id}`);
         return this.tasksService.getTaskById(id, user);
     }
 
@@ -36,6 +40,7 @@ export class TasksController {
         @Body() createTaskDto: CreateTaskDto,
         @GetUserDecorator() user: UserEntity,
     ): Promise<TaskEntity> {
+        this.logger.verbose(`[createTask] userId ${user.id}, object ${JSON.stringify(CreateTaskDto)}`);
         return this.tasksService.createTask(createTaskDto, user);
     }
 
@@ -44,6 +49,7 @@ export class TasksController {
         @Param('id', ParseIntPipe) id: number,
         @GetUserDecorator() user: UserEntity,
     ): Promise<boolean> {
+        this.logger.verbose(`[deleteTask] userId ${user.id}, id ${id}`);
         return this.tasksService.deleteTask(id, user);
     }
 
@@ -53,6 +59,7 @@ export class TasksController {
         @Body('status', TaskStatusValidationPipe) status: TaskStatus,
         @GetUserDecorator() user: UserEntity,
     ): Promise<TaskEntity> {
+        this.logger.verbose(`[updateTaskStatus] userId ${user.id}, id ${id}, status ${status}`);
         return this.tasksService.updateTaskStatus(id, status, user);
     }
 }
