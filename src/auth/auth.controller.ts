@@ -3,7 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { AuthService } from './auth.service';
 import { JwtSignInInterface } from './interface/jwt.interface';
-import { GetUser } from './decorator/get-user.decorator';
+import { GetUserDecorator } from './decorator/get-user.decorator';
 import { UserEntity } from './entity/user.entity';
 
 @Controller('auth')
@@ -29,7 +29,7 @@ export class AuthController {
     @Post('/test')
     @UseGuards(AuthGuard())
     // test(@Req() req) {
-    test(@GetUser() user: UserEntity) {
+    test(@GetUserDecorator() user: UserEntity) {
         return user;
     }
 }
